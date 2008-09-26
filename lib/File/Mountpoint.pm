@@ -6,7 +6,7 @@ package File::Mountpoint;
 
 use strict;
 
-our $VERSION = '0.01'
+our $VERSION = '0.01';
 
 use base qw( Exporter );
 
