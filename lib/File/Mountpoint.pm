@@ -1,109 +1,176 @@
+# Copyright (c) 2008  Joshua Hoblitt
+#
+# $Id$
+
 package File::Mountpoint;
+
 use strict;
 
-BEGIN {
-    use Exporter ();
-    use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-    $VERSION     = '0.01';
-    @ISA         = qw(Exporter);
-    #Give a hoot don't pollute, do not export more than needed by default
-    @EXPORT      = qw();
-    @EXPORT_OK   = qw();
-    %EXPORT_TAGS = ();
-}
+our $VERSION = '0.01'
 
+use base qw( Exporter );
 
-#################### subroutine header begin ####################
+use Carp;
+use File::stat qw( :FIELDS );
+use Fcntl qw( :mode );
+use File::Spec;
 
-=head2 sample_function
+our @EXPORT_OK = qw( is_mountpoint );
 
- Usage     : How to use this function/method
- Purpose   : What it does
- Returns   : What it returns
- Argument  : What it wants to know
- Throws    : Exceptions and other anomolies
- Comment   : This is a sample subroutine header.
-           : It is polite to include more pod and fewer comments.
-
-See Also   : 
-
-=cut
-
-#################### subroutine header end ####################
-
-
-sub new
+sub is_mountpoint
 {
-    my ($class, %parameters) = @_;
+# running mountpoint on /tmp yields:
+#   lstat("/tmp", {st_mode=S_IFDIR|S_ISVTX|0777, st_size=28672, ...}) = 0
+#   stat("/tmp/..", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+# running mountpoint on /tmp/ yields:
+#   lstat("/tmp/", {st_mode=S_IFDIR|S_ISVTX|0777, st_size=28672, ...}) = 0
+#   stat("/tmp//..", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
 
-    my $self = bless ({}, ref ($class) || $class);
+# $ mountpoint /tmp/asdf
+# mountpoint: /tmp/asdf: No such file or directory
+# $ mountpoint /tmp/binutils-2.18.tar.bz2 
+# mountpoint: /tmp/binutils-2.18.tar.bz2: not a directory
+# $ mountpoint /tmp                       
+# /tmp is not a mountpoint
 
-    return $self;
+    my $path = shift;
+
+    # run lstat() on the path
+    my $ls = lstat($path);
+
+    # check to see if the path exists
+    unless (defined $ls) {
+
+        croak "is_mountpoint: $path: No such file or directory";
+    }
+
+    # check to make sure that the path exists and is a directory
+    unless (S_ISDIR($st_mode)) {
+        croak "is_mountpoint: $path: not a directory";
+    }
+
+    # store the lstat() device
+    my $lsdev = $st_dev;
+
+    # append /.. to the path and run stat() on it
+    stat(File::Spec->catdir($path, "/.."));
+
+    # store the stat() device
+    my $fsdev = $st_dev;
+
+    # compare the lstat() and stat() devs
+    unless ($lsdev == $fsdev) {
+        carp "is_mounpoint: $path is not a mountpoint";
+        return;
+    }
+
+    return 1;
 }
-
-
-#################### main pod documentation begin ###################
-## Below is the stub of documentation for your module. 
-## You better edit it!
-
-
-=head1 NAME
-
-File::Mountpoint - Module abstract (<= 44 characters) goes here
-
-=head1 SYNOPSIS
-
-  use File::Mountpoint;
-  blah blah blah
-
-
-=head1 DESCRIPTION
-
-Stub documentation for this module was created by ExtUtils::ModuleMaker.
-It looks like the author of the extension was negligent enough
-to leave the stub unedited.
-
-Blah blah blah.
-
-
-=head1 USAGE
-
-
-
-=head1 BUGS
-
-
-
-=head1 SUPPORT
-
-
-
-=head1 AUTHOR
-
-    Joshua Hoblitt
-    CPAN ID: JHOBLITT
-    XYZ Corp.
-    jhoblitt@cpan.org
-    http://a.galaxy.far.far.away/modules
-
-=head1 COPYRIGHT
-
-This program is free software; you can redistribute
-it and/or modify it under the same terms as Perl itself.
-
-The full text of the license can be found in the
-LICENSE file included with this module.
-
-
-=head1 SEE ALSO
-
-perl(1).
-
-=cut
-
-#################### main pod documentation end ###################
 
 
 1;
-# The preceding line will help the module return a true value
 
+__END__
+
+
+=pod
+
+=head1 NAME
+
+File::Mountpoint - see if a directory is a mountpoint
+
+=head1 SYNOPSIS
+
+    use File::Mountpoint;
+
+    if (File::Mountpoint::is_mountpoint("/foo/bar")) {
+        ...
+    }
+
+    or
+
+    use File::MountPoint qw( is_mountpoint );
+
+    if (is_mountpoint("/foo/bar")) {
+        ...
+    }
+
+=head1 DESCRIPTION
+
+This module provides a single function, C<is_mountpoint()>, that can be used to
+tell if a directory path on a I<POSIX> filesystem is the point at which a
+volume is mounted.
+
+=head1 USAGE
+
+=head2 Import Parameters
+
+This module accepts I<symbol> names to be exported to it's C<import> method.
+
+    use File::MountPoint qw( is_mountpoint );
+
+=head2 Functions
+
+=over 4
+
+=item * C<is_mountpoint($path)>
+
+Accepts a single scalar parameter which is the path (must be a directory) to be tested.
+
+This function will C<die> if C<$path> does not exist or is not a directory.
+
+Returns true on success and fails with C<undef> in scalar context or C<()> in list context.
+
+=back
+
+=head1 REFERENCES
+
+=over 4
+
+=item mountpoint
+
+This module is based on the behavior of the C<mountpoint> utility that is included with the sysvinit package.
+
+L<http://freshmeat.net/redir/sysvinit/10192/url_tgz/sysvinit>
+
+=back
+
+=head1 CREDITS
+
+Miquel van Smoorenburg, miquels@cistron.nl, author of the C<sysvinit> package.
+
+Me, myself, and I.
+
+=head1 SUPPORT
+
+Please contact the author directly via e-mail.
+
+=head1 AUTHOR
+
+Joshua Hoblitt <jhoblitt@cpan.org>
+
+=head1 COPYRIGHT
+
+Copyright (C) 2008  Joshua Hoblitt.  All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA  02111-1307, USA.
+
+The full text of the license can be found in the LICENSE file included with
+this module, or in the L<perlgpl> Pod as supplied with Perl 5.8.1 and later.
+
+=head1 SEE ALSO
+
+C<mountpoint>
+
+=cut
