@@ -1,0 +1,7 @@
+MANIFEST
+README
+Changes
+Build.PL
+Makefile.PL
+lib/File/Mountpoint.pm
+t/.t
