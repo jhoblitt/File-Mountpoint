@@ -7,3 +7,4 @@ README
 lib/File/Mountpoint.pm
 t/00_distribution.t
 t/01_load.t
+t/02_mountpoint.t
