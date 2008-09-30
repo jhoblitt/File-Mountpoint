@@ -1,6 +1,13 @@
-# -*- perl -*-
+#!/usr/bin/env perl
 
-# t/001_load.t - check module loading and create testing directory
+# Copyright (C) 2008  Joshua Hoblitt
+# 
+# $Id$
+
+use strict;
+use warnings FATAL => qw( all );
+
+use lib qw( ./lib ./t );
 
 use Test::More tests => 1;
 

@@ -15,6 +15,7 @@ Module::Build->new(
     },
     build_requires      => {
         'Test::More'=> 0,
+        'File::Temp'=> 0,
     },
     recommends          => {
         'Test::Distribution'    => '1.22',
