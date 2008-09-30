@@ -9,7 +9,8 @@ use warnings FATAL => qw( all );
 
 use lib qw( ./lib ./t );
 
-use Test::More tests => 4;
+use Test::More tests => 5;
+
 use File::Temp qw( tempdir );
 
 use File::Mountpoint qw( is_mountpoint );
@@ -34,3 +35,5 @@ eval {
     is_mountpoint($fh->filename);
 };
 like($@, qr/not a directory/, 'not a directory');
+
+is(is_mountpoint(), undef, "no paarms");

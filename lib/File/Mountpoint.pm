@@ -35,6 +35,8 @@ sub is_mountpoint
 
     my $path = shift;
 
+    return unless defined $path;
+
     # verbose - currnetly unused
     my $verbose;
 
