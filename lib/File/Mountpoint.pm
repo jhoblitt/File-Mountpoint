@@ -35,12 +35,14 @@ sub is_mountpoint
 
     my $path = shift;
 
+    # verbose - currnetly unused
+    my $verbose;
+
     # run lstat() on the path
     my $ls = lstat($path);
 
     # check to see if the path exists
     unless (defined $ls) {
-
         croak "is_mountpoint: $path: No such file or directory";
     }
 
@@ -49,18 +51,21 @@ sub is_mountpoint
         croak "is_mountpoint: $path: not a directory";
     }
 
-    # store the lstat() device
-    my $lsdev = $st_dev;
+    # store the lstat() device and inode
+    my $ls_dev = $st_dev;
+    my $ls_ino = $st_ino;
 
     # append /.. to the path and run stat() on it
     stat(File::Spec->catdir($path, "/.."));
 
     # store the stat() device
-    my $fsdev = $st_dev;
+    my $s_dev = $st_dev;
+    my $s_ino = $st_ino;
 
     # compare the lstat() and stat() devs
-    unless ($lsdev == $fsdev) {
-        carp "is_mounpoint: $path is not a mountpoint";
+# based directly on code from mountpoint.c
+    unless (($ls_dev != $s_dev) || ($ls_dev == $s_dev && $ls_ino == $s_ino)) {
+        carp "is_mounpoint: $path is not a mountpoint" if $verbose;
         return;
     }
 
