@@ -1,6 +1,4 @@
 # Copyright (c) 2008  Joshua Hoblitt
-#
-# $Id$
 
 package File::Mountpoint;
 
